@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8">
+    <title>科学计算器</title>
+    <style type="text/css">
+        table {
+            margin: 15px auto;
+            font-size: 22px;
+            border: 5px outset orange;
+        }
+
+        #tab-1,
+        #tab-2,
+        #tab-3 {
+            border: 3px outset rgba(15, 10, 10, 0.3);
+        }
+
+        input {
+            outline: none;
+            box-shadow: 5px 5px 2px rgba(100, 100, 100, 0.8) inset;
+        }
+
+        #txtnum {
+            text-align: right;
+            height: 50px;
+            width: 100%;
+            background: #fff;
+            font-size: 22px;
+        }
+
+        td {
+            padding: 5px;
+            background: #ccc;
+        }
+
+        [type=button] {
+            width: 60px;
+            height: 40px;
+            border-radius: 5px;
+            background: #fff;
+            box-shadow: 5px 3px 2px rgba(100, 100, 100, 0.6) inset;
+        }
+    </style>
+</head>
+
+<body>
+    <table id="main" cellspacing="0">
+        <tr>
+            <td colspan="2">
+                <input type="text" id="txtnum" value="0">
+            </td>
+            <td>
+                <table id="tab-1">
+                    <tr>
+                        <td><input type="button" value="清除" onclick="clearAll()"></td>
+                        <td><input type="button" value="退格" onclick="backspace()"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table id="tab-2">
+                    <tr>
+                        <td><input type="button" value="sin" onclick="func('sin')"></td>
+                        <td><input type="button" value="cos" onclick="func('cos')"></td>
+                        <td><input type="button" value="tan" onclick="func('tan')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="asin" onclick="func('asin')"></td>
+                        <td><input type="button" value="acos" onclick="func('acos')"></td>
+                        <td><input type="button" value="atan" onclick="func('atan')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="π" onclick="append('Math.PI')"></td>
+                        <td><input type="button" value="1/x" onclick="func('reciprocal')"></td>
+                        <td><input type="button" value="e" onclick="append('Math.E')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="ln" onclick="func('ln')"></td>
+                        <td><input type="button" value="log" onclick="func('log')"></td>
+                        <td><input type="button" value="√" onclick="func('sqrt')"></td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table id="tab-3">
+                    <tr>
+                        <td><input type="button" value="7" onclick="append('7')"></td>
+                        <td><input type="button" value="8" onclick="append('8')"></td>
+                        <td><input type="button" value="9" onclick="append('9')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="4" onclick="append('4')"></td>
+                        <td><input type="button" value="5" onclick="append('5')"></td>
+                        <td><input type="button" value="6" onclick="append('6')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="1" onclick="append('1')"></td>
+                        <td><input type="button" value="2" onclick="append('2')"></td>
+                        <td><input type="button" value="3" onclick="append('3')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="0" onclick="append('0')"></td>
+                        <td><input type="button" value="." onclick="append('.')"></td>
+                        <td><input type="button" value="=" onclick="calculate()"></td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table id="tab-3">
+                    <tr>
+                        <td><input type="button" value="+" onclick="append('+')"></td>
+                        <td><input type="button" value="取整" onclick="func('floor')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="-" onclick="append('-')"></td>
+                        <td><input type="button" value="取余" onclick="append('%')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="*" onclick="append('*')"></td>
+                        <td><input type="button" value="x^y" onclick="append('**')"></td>
+                    </tr>
+                    <tr>
+                        <td><input type="button" value="÷" onclick="append('/')"></td>
+                        <td><input type="button" value="+/-" onclick="toggleSign()"></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+        let expression = ''; // 内部始终用 '/' 存储
+        let justCalculated = false;
+
+        function $(id) {
+            return document.getElementById(id);
+        }
+
+        // 将内部表达式转为显示格式：/ → ÷
+        function toDisplayText(expr) {
+            if (expr === '') return '0';
+            // 把所有的 / 替换成 ÷
+            return expr.replace(/\//g, '÷');
+        }
+
+        function display(value) {
+            $('txtnum').value = toDisplayText(value);
+        }
+
+        function append(str) {
+            if (justCalculated) {
+                expression = '';
+                justCalculated = false;
+            }
+            expression += str;
+            display(expression);
+        }
+
+        function clearAll() {
+            expression = '';
+            justCalculated = false;
+            display(expression);
+        }
+
+        function backspace() {
+            if (justCalculated) return;
+            expression = expression.slice(0, -1);
+            display(expression);
+        }
+
+        function func(name) {
+            if (justCalculated) {
+                expression = '';
+                justCalculated = false;
+            }
+
+            const lastChar = expression.slice(-1);
+            if (lastChar === '' || '+-*/%('.includes(lastChar)) {
+                switch (name) {
+                    case 'sin': expression += 'Math.sin('; break;
+                    case 'cos': expression += 'Math.cos('; break;
+                    case 'tan': expression += 'Math.tan('; break;
+                    case 'asin': expression += 'Math.asin('; break;
+                    case 'acos': expression += 'Math.acos('; break;
+                    case 'atan': expression += 'Math.atan('; break;
+                    case 'ln': expression += 'Math.log('; break;
+                    case 'log': expression += '(Math.log('; break;
+                    case 'sqrt': expression += 'Math.sqrt('; break;
+                    case 'floor': expression += 'Math.floor('; break;
+                    case 'reciprocal':
+                        if (expression === '' || '+-*/%('.includes(lastChar)) {
+                            alert('请先输入数字');
+                            return;
+                        }
+                        expression += '**-1';
+                        display(expression);
+                        return;
+                }
+                if (name === 'log') {
+                    expression += ')/Math.log(10))';
+                } else if (name !== 'reciprocal') {
+                    // 不自动加右括号，由用户控制
+                }
+            } else {
+                alert('请在运算符后使用函数');
+                return;
+            }
+            display(expression);
+        }
+
+        function toggleSign() {
+            if (justCalculated) return;
+            if (expression === '' || expression === '0') {
+                expression = '-';
+                display(expression);
+                return;
+            }
+            if (!/^[+\-*/]/.test(expression)) {
+                expression = '-' + expression;
+                display(expression);
+            } else {
+                alert('无法在此位置切换正负');
+            }
+        }
+
+        function calculate() {
+            if (expression === '') {
+                display('0');
+                return;
+            }
+
+            // 检查除零：匹配 / 后跟 0（允许空格、小数）
+            const cleanExpr = expression.replace(/\s/g, '');
+            if (/\/0+(\.0*)?([)+\-*/%]|$)/.test(cleanExpr)) {
+                alert('不能除以0');
+                return;
+            }
+
+            try {
+                const result = new Function('return (' + expression + ');')();
+                if (!isFinite(result)) throw new Error('Invalid result');
+                // 显示结果（不带 ÷，因为结果是纯数字）
+                $('txtnum').value = result;
+                expression = String(result);
+                justCalculated = true;
+            } catch (e) {
+                alert('表达式错误，请检查输入');
+                display(expression);
+            }
+        }
+    </script>
+</body>
+
+</html>
